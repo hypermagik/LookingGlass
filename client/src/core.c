@@ -37,10 +37,10 @@
 static bool isInView(void)
 {
   return
-    g_cursor.pos.x >= g_state.dstRect.x                     &&
-    g_cursor.pos.x <  g_state.dstRect.x + g_state.dstRect.w &&
-    g_cursor.pos.y >= g_state.dstRect.y                     &&
-    g_cursor.pos.y <  g_state.dstRect.y + g_state.dstRect.h;
+    g_cursor.pos.x >= g_state.dstRect.x                                           &&
+    g_cursor.pos.x <  g_state.dstRect.x + g_state.dstRect.w * g_state.windowScale &&
+    g_cursor.pos.y >= g_state.dstRect.y                                           &&
+    g_cursor.pos.y <  g_state.dstRect.y + g_state.dstRect.h * g_state.windowScale;
 }
 
 bool core_inputEnabled(void)
@@ -221,8 +221,8 @@ void core_updatePositionInfo(void)
       .type = LG_MSG_WINDOWSIZE,
       .windowSize =
       {
-        .width  = g_state.windowW,
-        .height = g_state.windowH
+        .width  = g_state.windowW * g_state.windowScale,
+        .height = g_state.windowH * g_state.windowScale
       }
     };
     lgMessage_post(&msg);
@@ -336,12 +336,12 @@ void core_updatePositionInfo(void)
   }
   g_state.dstRect.valid = true;
 
-  g_cursor.useScale = (
-      srcH       != g_state.dstRect.h ||
-      srcW       != g_state.dstRect.w);
+  // g_cursor.useScale = (
+  //     srcH       != g_state.dstRect.h ||
+  //     srcW       != g_state.dstRect.w);
 
-  g_cursor.scale.x  = (float)srcW / (float)g_state.dstRect.w;
-  g_cursor.scale.y  = (float)srcH / (float)g_state.dstRect.h;
+  // g_cursor.scale.x  = (float)srcW / (float)g_state.dstRect.w;
+  // g_cursor.scale.y  = (float)srcH / (float)g_state.dstRect.h;
 
   if (!g_state.posInfoValid)
   {
@@ -442,9 +442,9 @@ void core_handleGuestMouseUpdate(void)
   g_state.ds->guestPointerUpdated(
     g_cursor.guest.x, g_cursor.guest.y,
     util_clamp(localPos.x, g_state.dstRect.x,
-      g_state.dstRect.x + g_state.dstRect.w),
+      g_state.dstRect.x + g_state.dstRect.w * g_state.windowScale),
     util_clamp(localPos.y, g_state.dstRect.y,
-      g_state.dstRect.y + g_state.dstRect.h)
+      g_state.dstRect.y + g_state.dstRect.h * g_state.windowScale)
   );
 }
 
@@ -636,8 +636,8 @@ fallback:
     if (
         local.x + move.x <  g_state.dstRect.x ||
         local.y + move.y <  g_state.dstRect.y ||
-        local.x + move.x >= g_state.dstRect.x + g_state.dstRect.w ||
-        local.y + move.y >= g_state.dstRect.y + g_state.dstRect.h)
+        local.x + move.x >= g_state.dstRect.x + g_state.dstRect.w * g_state.windowScale ||
+        local.y + move.y >= g_state.dstRect.y + g_state.dstRect.h * g_state.windowScale)
     {
       local.x += move.x;
       local.y += move.y;

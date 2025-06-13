@@ -65,7 +65,7 @@ bool app_isFormatValid(void)
 
 bool app_isOverlayMode(void)
 {
-  if (g_state.overlayInput)
+  if (g_state.overlayInput || g_state.overlays == NULL)
     return true;
 
   bool result = false;
