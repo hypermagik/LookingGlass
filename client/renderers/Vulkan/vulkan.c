@@ -110,6 +110,13 @@ static struct Option vulkan_options[] =
     .type         = OPTION_TYPE_BOOL,
     .value.x_bool = false
   },
+  {
+    .module       = "vulkan",
+    .name         = "presentMode",
+    .description  = "Vulkan present mode (0 = IMEDIATE, 1 = MAILBOX, 2 = FIFO)",
+    .type         = OPTION_TYPE_INT,
+    .value.x_int  = 1
+  },
 
   {0}
 };
@@ -502,11 +509,13 @@ static bool vulkan_createSwapchain(struct Inst * this,
   }
 
   VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
+
+  int presentModeOpt = option_get_int("vulkan", "presentMode");
   for (uint32_t i = 0; i < modeCount; ++i)
   {
-    if (modes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
+    if (modes[i] == presentModeOpt)
     {
-      presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+      presentMode = presentModeOpt;
       break;
     }
   }
