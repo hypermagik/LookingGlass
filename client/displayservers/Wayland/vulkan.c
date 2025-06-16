@@ -70,6 +70,13 @@ bool waylandVulkanPresent(VkQueue queue, struct VkPresentInfoKHR * presentInfo)
     return false;
   }
 
+  if (wlWm.needsResize)
+  {
+    waylandDoResize();
+  }
+
+  wlWm.desktop->shellAckConfigureIfNeeded();
+
   return true;
 }
 #endif

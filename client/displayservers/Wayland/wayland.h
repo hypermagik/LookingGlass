@@ -317,3 +317,4 @@ bool waylandWaitFrame(void);
 void waylandSkipFrame(void);
 void waylandStopWaitFrame(void);
 void waylandNeedsResize(void);
+void waylandDoResize(void);

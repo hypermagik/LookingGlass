@@ -974,6 +974,10 @@ static bool vulkan_onResize(LG_Renderer * renderer, const int width,
     const int height, const double scale, const LG_RendererRect destRect,
     LG_RendererRotate rotate)
 {
+  if (width == 0 || height == 0 || scale == 0.0) {
+    return true;
+  }
+
   struct Inst * this = UPCAST(struct Inst, renderer);
 
   this->width   = width * scale;
