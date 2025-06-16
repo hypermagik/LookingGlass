@@ -827,7 +827,7 @@ err:
   return false;
 }
 
-static bool vulkan_initPipeline(struct Inst * this)
+static bool vulkan_initPipeline(struct Inst * this, bool force)
 {
   VkSurfaceFormatKHR surfaceFormat = vulkan_selectSurfaceFormat(this);
   if (surfaceFormat.format == VK_FORMAT_UNDEFINED)
@@ -837,7 +837,7 @@ static bool vulkan_initPipeline(struct Inst * this)
   bool surfaceSizeChanged = this->width != this->swapchainExtent.width ||
       this->height != this->swapchainExtent.height;
 
-  if (surfaceFormatChanged || surfaceSizeChanged)
+  if (surfaceFormatChanged || surfaceSizeChanged || force)
   {
     ShaderColorSpace colorSpace;
     switch (surfaceFormat.colorSpace)
@@ -997,7 +997,7 @@ static bool vulkan_onResize(LG_Renderer * renderer, const int width,
     this->scaleY         = (float)this->destRect.h / (float)this->height;
   }
 
-  if (!vulkan_initPipeline(this))
+  if (!vulkan_initPipeline(this, false))
     return false;
 
   vulkan_calc_mouse_size(this);
@@ -1045,7 +1045,7 @@ static bool vulkan_onFrameFormat(LG_Renderer * renderer,
   memcpy(&this->format, &format, sizeof(LG_RendererFormat));
   this->formatValid = true;
 
-  if (!vulkan_initPipeline(this))
+  if (!vulkan_initPipeline(this, false))
     goto err;
 
   return true;
@@ -1712,6 +1712,19 @@ static uint32_t vulkan_acquireSwapchainImage(struct Inst * this)
   uint32_t imageIndex;
   VkResult result = vkAcquireNextImageKHR(this->device, this->swapchain,
       UINT64_MAX, this->swapchainAcquireSemaphore, NULL, &imageIndex);
+  if (result == VK_SUBOPTIMAL_KHR)
+  {
+    DEBUG_INFO("Swapchain is suboptimal, recreating pipeline");
+    if (!vulkan_initPipeline(this, true))
+    {
+      DEBUG_ERROR("Failed to init pipeline");
+      return UINT32_MAX;
+    }
+
+    result = vkAcquireNextImageKHR(this->device, this->swapchain,
+        UINT64_MAX, this->swapchainAcquireSemaphore, NULL, &imageIndex);
+  }
+
   if (result != VK_SUCCESS)
   {
     DEBUG_ERROR("Failed to acquire swapchain image (VkResult: %d)", result);
