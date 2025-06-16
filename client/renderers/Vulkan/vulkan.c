@@ -1460,7 +1460,7 @@ static bool vulkan_createDescriptorPool(struct Inst * this)
     },
     {
       .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-      .descriptorCount = 8
+      .descriptorCount = 16
     },
     {
       .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
@@ -1472,7 +1472,7 @@ static bool vulkan_createDescriptorPool(struct Inst * this)
   {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
     .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-    .maxSets = 8,
+    .maxSets = 16,
     .poolSizeCount = ARRAY_LENGTH(poolSizes),
     .pPoolSizes = poolSizes
   };
