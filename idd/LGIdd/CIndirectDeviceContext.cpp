@@ -21,7 +21,6 @@
 #include "CIndirectDeviceContext.h"
 #include "CIndirectMonitorContext.h"
 
-#include "CSettings.h"
 #include "CPlatformInfo.h"
 #include "CPipeServer.h"
 #include "CDebug.h"
@@ -43,14 +42,36 @@ static const struct LGMPQueueConfig POINTER_QUEUE_CONFIG =
   1000                //subTimeout
 };
 
-void CIndirectDeviceContext::PopulateDefaultModes()
+const DWORD DefaultDisplayModes[][3] =
 {
-  g_settings.LoadModes();
+  {7680, 4800, 120}, {7680, 4320, 120}, {6016, 3384, 120}, {5760, 3600, 120},
+  {5760, 3240, 120}, {5120, 2800, 120}, {4096, 2560, 120}, {4096, 2304, 120},
+  {3840, 2400, 120}, {3840, 2160, 120}, {3200, 2400, 120}, {3200, 1800, 120},
+  {3008, 1692, 120}, {2880, 1800, 120}, {2880, 1620, 120}, {2560, 1600, 120},
+  {2560, 1440, 120}, {1920, 1440, 120}, {1920, 1200, 120}, {1920, 1080, 120},
+  {1600, 1200, 120}, {1600, 1024, 120}, {1600, 1050, 120}, {1600, 900 , 120},
+  {1440, 900 , 120}, {1400, 1050, 120}, {1366, 768 , 120}, {1360, 768 , 120},
+  {1280, 1024, 120}, {1280, 960 , 120}, {1280, 800 , 120}, {1280, 768 , 120},
+  {1280, 720 , 120}, {1280, 600 , 120}, {1152, 864 , 120}, {1024, 768 , 120},
+  {800 , 600 , 120}, {640 , 480 , 120}
+};
 
-  m_displayModes.clear();
-  m_displayModes.reserve(g_settings.GetDisplayModes().size());
-  for (auto& dm : g_settings.GetDisplayModes())
-    m_displayModes.push_back(dm);
+const DWORD DefaultPreferredDisplayMode = 19;
+
+void CIndirectDeviceContext::PopulateDefaultModes(bool setDefaultMode)
+{
+  m_displayModes.reserve(m_displayModes.size() +
+    ARRAYSIZE(DefaultDisplayModes));
+
+  for (int i = 0; i < ARRAYSIZE(DefaultDisplayModes); ++i)
+  {
+    DisplayMode m;
+    m.width     = DefaultDisplayModes[i][0];
+    m.height    = DefaultDisplayModes[i][1];
+    m.refresh   = DefaultDisplayModes[i][2];
+    m.preferred = setDefaultMode && (i == DefaultPreferredDisplayMode);
+    m_displayModes.push_back(m);
+  }
 }
 
 void CIndirectDeviceContext::InitAdapter()
@@ -58,7 +79,8 @@ void CIndirectDeviceContext::InitAdapter()
   if (!m_ivshmem.Init() || !m_ivshmem.Open())
     return;
 
-  PopulateDefaultModes();
+  m_displayModes.clear();
+  PopulateDefaultModes(true);
 
   IDDCX_ADAPTER_CAPS caps = {};
   caps.Size = sizeof(caps);
@@ -197,10 +219,10 @@ void CIndirectDeviceContext::ReplugMonitor()
 
 void CIndirectDeviceContext::OnAssignSwapChain()
 {
-  if (m_doSetMode)
+  if (m_setCustomMode)
   {
-    m_doSetMode = false;
-    g_pipe.SetDisplayMode(m_setMode.width, m_setMode.height); //FIXME: refresh
+    m_setCustomMode = false;
+    g_pipe.SetDisplayMode(m_customMode.width, m_customMode.height);
   }
 }
 
@@ -296,14 +318,15 @@ NTSTATUS CIndirectDeviceContext::MonitorQueryTargetModes(
 
 void CIndirectDeviceContext::SetResolution(int width, int height)
 {
-  m_setMode.width     = width;
-  m_setMode.height    = height;
-  m_setMode.refresh   = 120; //FIXME
-  m_setMode.preferred = true;
-  g_settings.SetExtraMode(m_setMode);
+  m_displayModes.clear();
+  m_customMode.width     = width;
+  m_customMode.height    = height;
+  m_customMode.refresh   = 120;
+  m_customMode.preferred = true;
+  m_displayModes.push_back(m_customMode);
+  PopulateDefaultModes(false);
 
-  PopulateDefaultModes();
-  m_doSetMode = true;
+  m_setCustomMode = true;
 
 #if 1
   ReplugMonitor();

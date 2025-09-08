@@ -26,7 +26,6 @@
 #include <vector>
 
 #include "CIVSHMEM.h"
-#include "CSettings.h"
 
 extern "C" {
   #include "lgmp/host.h"
@@ -88,10 +87,16 @@ private:
   void LGMPTimer();
   void ResendCursor();
 
-  CSettings::DisplayModes m_displayModes;
-
-  CSettings::DisplayMode m_setMode;
-  bool m_doSetMode;
+  struct DisplayMode
+  {
+    unsigned width;
+    unsigned height;
+    unsigned refresh;
+    bool     preferred;
+  };
+  std::vector<DisplayMode> m_displayModes;
+  DisplayMode m_customMode    = {};
+  bool        m_setCustomMode = false;
 
 public:
   CIndirectDeviceContext(_In_ WDFDEVICE wdfDevice) :
@@ -101,7 +106,7 @@ public:
 
   bool SetupLGMP(size_t alignSize);
 
-  void PopulateDefaultModes();
+  void PopulateDefaultModes(bool setDefaultMode);
   void InitAdapter();
   void FinishInit(UINT connectorIndex);
   void ReplugMonitor();
